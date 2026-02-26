@@ -12,10 +12,7 @@ mongoose.connect(DB, {
   useCreateIndex: true,
   useFindAndModify: false,
   useUnifiedTopology: true
-}).then(con => {
-  console.log(con.connections);
-  console.log('DB connection successfull!');
-});
+}).then(() => console.log('DB connection successfull!'));
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
