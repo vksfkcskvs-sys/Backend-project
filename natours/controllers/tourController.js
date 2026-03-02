@@ -89,5 +89,4 @@ exports.deleteTour = async (req, res) => {
       message: err
     });
   }
-
 };
