@@ -9,7 +9,7 @@ const tourSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     maxlength: [40, 'A tour name must have less or equal then 40 characters'],
-    minlength: [10, 'A tour name must have more or equal then 40 characters']
+    minlength: [10, 'A tour name must have more or equal then 10 characters']
     // validate: [validator.isAlpha, 'Tour name must only contain characters']
   },
   slug: String,
@@ -26,7 +26,7 @@ const tourSchema = new mongoose.Schema({
     required: [true, 'A tour must have a difficulty'],
     enum: {
       values: ['easy', 'medium', 'difficult'],
-      message: 'Difficulty is either: easy, medium and difficult'
+      message: 'Difficulty is either: easy, medium or difficult'
     }
   },
   ratingsAverage: {
@@ -81,43 +81,33 @@ const tourSchema = new mongoose.Schema({
   toObject: { virtuals: true },
 });
 
+// Virtual property
 tourSchema.virtual('durationWeeks').get(function () {
-  return this.duration / 7
+  return this.duration / 7;
 });
 
-tourSchema.pre('save', function (next) {
+// DOCUMENT MIDDLEWARE: runs before .save() and .create()
+tourSchema.pre('save', async function () {
   this.slug = slugify(this.name, { lower: true });
-  next();
 });
 
-// tourSchema.pre('save', function (next) {
-//   console.log('will save document...');
-//   next();
-// });
-
-// tourSchema.post('save', function (doc, next) {
-//   console.log(doc);
-//   next();
-// })
-
-tourSchema.pre(/^find/, function (next) {
+// QUERY MIDDLEWARE: runs before any find query
+tourSchema.pre(/^find/, async function () {
   this.find({ secretTour: { $ne: true } });
-
   this.start = Date.now();
-  next();
 });
 
 tourSchema.post(/^find/, function (docs, next) {
-  console.log(`query took ${Date.now() - this.start} milliseconds!`);
+  console.log(`Query took ${Date.now() - this.start} milliseconds!`);
   next();
 });
 
+// AGGREGATION MIDDLEWARE: runs before aggregation pipelines
 tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } })
-
+  this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
   console.log(this.pipeline());
   next();
-})
+});
 
 const Tour = mongoose.model('Tour', tourSchema);
 
