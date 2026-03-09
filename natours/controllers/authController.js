@@ -66,11 +66,19 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
   // 2) VALIDATE TOKEN
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  console.log(decoded);
 
   // 3) CHECK IF USER EXISTS 
+  const freshUser = await User.findById(decoded.id);
+  if (!freshUser) {
+    return next(new AppError('The user belonging to this token no longer exists', 401))
+  }
 
   // 4) AUTH CHECK IF USER CHANGE PASSWORD AFTERR TOKEN WAS ISSUED
+  if (freshUser.changedPasswordAfter(decoded.iat)) {
+    return next(new AppError('User recently changed password! Please log in again.', 401))
+  }
 
+  // GRANT ACCESS TO PROTECTED ROUTE
+  req.user = freshUser;
   next();
 });
